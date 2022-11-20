@@ -9,7 +9,9 @@ import java.awt.Dimension
 import java.awt.event.*
 import java.io.File
 import java.lang.Math.abs
+import java.lang.Math.random
 import javax.swing.*
+import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 
 fun main() {
@@ -41,6 +43,20 @@ fun createWindow(title: String) = runBlocking(Dispatchers.Swing) {
     window.layer.awaitRedraw()
     window.isVisible = true
 }
+fun saveField(field: Field){
+    if(State.saveFile.path != "") {
+        State.saveFile.createNewFile()
+        val saver = State.saveFile.bufferedWriter()
+        saver.write(field.size.toString())
+        saver.newLine()
+        saver.write(field.cells.map { if (it.isAlive) "1" else "0" }.joinToString(" "))
+        saver.close()
+        State.saveFile = File("")
+    }
+}
+fun openField(): Field{
+    return Field(State.openFile.path.toString())
+}
 
 class Cell(val x: Int, val y: Int, var isAlive: Boolean){
     fun choose(){
@@ -71,7 +87,7 @@ class Field(val path: String = "./data/CommonField.txt", var size: Int = 20, var
         }
     }
     fun randomField(){
-
+        cells = cells.map{Cell(it.x, it.y, Random.nextBoolean())}
     }
 }
 class Button(val x: Int, val y: Int, val w: Int, val h: Int){
@@ -84,34 +100,35 @@ class Renderer(val layer: SkiaLayer): SkiaRenderer {
     val font = Font(typeface, 14f)
     val alivePaint = Paint().apply{color = 0xFFFF4500.toInt()}
     val deadPaint = Paint().apply{color = 0xFF228B22.toInt()}
-    var field = Field()
-    val nextButton = Button(30, 50+21*field.size, 50, 30)
-    val randomButton = Button(100, 50+21*field.size, 50, 30)
+
+    val nextButton = Button(30, 50+21*State.field.size, 50, 30)
+    val randomButton = Button(100, 50+21*State.field.size, 50, 30)
+
     @ExperimentalTime
     override fun onRender(canvas: Canvas, width: Int, height: Int, nanoTime: Long) {
         val contentScale = layer.contentScale
         canvas.scale(contentScale, contentScale)
         if(State.isClicked) {
-            if (field.mouseIn()) {
-                field.transform(State.mouseX, State.mouseY)
+            if (State.field.mouseIn()) {
+                State.field.transform(State.mouseX, State.mouseY)
                 State.isClicked = false
             }
             if (nextButton.mouseIn()) {
-                field.nextGeneration()
+                State.field.nextGeneration()
                 State.isClicked = false
             }
             if(randomButton.mouseIn()) {
-                field.randomField()
+                State.field.randomField()
                 State.isClicked = false
             }
         }
         if(State.openFile.path != ""){
-            field = openField()
+            State.field = openField()
             State.openFile = File("")
         }
-        saveField(field)
-        drawPlayField(canvas, field)
-        drawButtons(canvas, field)
+        saveField(State.field)
+        drawPlayField(canvas, State.field)
+        drawButtons(canvas, State.field)
         layer.needRedraw()
     }
     private fun drawPlayField(canvas: Canvas, field: Field){
@@ -120,20 +137,8 @@ class Renderer(val layer: SkiaLayer): SkiaRenderer {
     private fun drawButtons(canvas: Canvas, field: Field){
         canvas.drawRect(Rect.makeXYWH(30f, 50f+21f*field.size, 50f, 30f), Paint().apply { color = 0x55FF4500.toInt()})
         canvas.drawString("Next", 38f, 70f+21f*field.size, font, deadPaint)
-    }
-    private fun saveField(field: Field){
-        if(State.saveFile.path != "") {
-            State.saveFile.createNewFile()
-            val saver = State.saveFile.bufferedWriter()
-            saver.write(field.size.toString())
-            saver.newLine()
-            saver.write(field.cells.map { if (it.isAlive) "1" else "0" }.joinToString(" "))
-            saver.close()
-            State.saveFile = File("")
-        }
-    }
-    private fun openField(): Field{
-        return Field(State.openFile.path.toString())
+        canvas.drawRect(Rect.makeXYWH(100f, 50f+21f*field.size, 70f, 30f), Paint().apply { color = 0x55FF4500.toInt()})
+        canvas.drawString("Random", 108f, 70f+21f*field.size, font, deadPaint)
     }
 }
 object State {
@@ -142,6 +147,7 @@ object State {
     var isClicked  = false
     var saveFile = File("")
     var openFile = File("")
+    var field = Field()
 }
 object MouseListener : MouseAdapter() {
     override fun mousePressed(event: MouseEvent) {
@@ -171,5 +177,9 @@ object OpenActionListener : ActionListener {
 object WindowCloser: WindowAdapter() {
     override fun windowClosing(event: WindowEvent?) {
         val result = JOptionPane.showConfirmDialog(null, "Save the state of the field?", "Autosave", JOptionPane.YES_NO_OPTION)
+        if(result == 0){
+            State.saveFile = File("./data/CommonField.txt")
+            saveField(State.field)
+        }
     }
 }
