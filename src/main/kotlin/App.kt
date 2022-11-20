@@ -77,7 +77,7 @@ class Field(val path: String = "./data/CommonField.txt", var size: Int = 20, var
         }
     }
     fun transform(x: Int, y: Int) { cells[((x - 10) / 21 - 1) * size + (y - 10) / 21 - 1].choose() }
-    fun mouseIn(): Boolean = (State.mouseX > 10 && State.mouseX < 10+size*21) && (State.mouseY > 10 && State.mouseY < 10+size*21)
+    fun mouseIn(): Boolean = (State.mouseX > 10+21 && State.mouseX < 10+(size+1)*21) && (State.mouseY > 10+21 && State.mouseY < 10+(size+1)*21)
     fun aliveNeighbours(cell: Cell): Int =  cells.filter { abs((it.x - cell.x)%20) <= 1 && abs((it.y - cell.y)%20) <= 1 && (it.x != cell.x || it.y != cell.y)}.count{it.isAlive}
     fun nextGeneration(){
         cells = cells.map{
@@ -111,16 +111,14 @@ class Renderer(val layer: SkiaLayer): SkiaRenderer {
         if(State.isClicked) {
             if (State.field.mouseIn()) {
                 State.field.transform(State.mouseX, State.mouseY)
-                State.isClicked = false
             }
             if (nextButton.mouseIn()) {
                 State.field.nextGeneration()
-                State.isClicked = false
             }
             if(randomButton.mouseIn()) {
                 State.field.randomField()
-                State.isClicked = false
             }
+            State.isClicked = false
         }
         if(State.openFile.path != ""){
             State.field = openField()
