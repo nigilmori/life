@@ -13,7 +13,6 @@ import java.lang.Math.random
 import javax.swing.*
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
-
 fun main() {
     createWindow("Life")
 }
