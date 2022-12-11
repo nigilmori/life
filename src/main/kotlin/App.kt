@@ -24,8 +24,6 @@ fun createWindow(title: String) = runBlocking(Dispatchers.Swing) {
     window.defaultCloseOperation = WindowConstants.DISPOSE_ON_CLOSE
     window.title = title
     window.addWindowListener(WindowCloser)
-
-
     window.layer.renderer = Renderer(window.layer)
     window.layer.addMouseListener(MouseListener)
     window.layer.addMouseMotionListener(MouseMotionListener)
@@ -139,11 +137,9 @@ class Renderer(val layer: SkiaLayer): SkiaRenderer {
     val font = Font(typeface, 14f)
     val alivePaint = Paint().apply{color = 0xFFFF4500.toInt()}
     val deadPaint = Paint().apply{color = 0xFF228B22.toInt()}
-
     var buttons = listOf(Button(1250, 10, 200, 50, "Next"),
         Button(1250, 80, 200, 50, "Random"),
         Button(1250, 150, 200, 50, "Start"))
-
     @ExperimentalTime
     override fun onRender(canvas: Canvas, width: Int, height: Int, nanoTime: Long) {
         val contentScale = layer.contentScale
@@ -166,7 +162,6 @@ class Renderer(val layer: SkiaLayer): SkiaRenderer {
             }
             State.isClicked = false
         }
-
         if(State.openFile.path != ""){
             State.field = openField()
             State.openFile = File("")
@@ -284,7 +279,6 @@ object KeyboardListener: KeyListener{
         }
     }
 }
-
 object SaveActionListener : ActionListener {
     override fun actionPerformed(event: ActionEvent?) {
         var fileSaver = JFileChooser()
